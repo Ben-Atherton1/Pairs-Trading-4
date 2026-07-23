@@ -1,0 +1,2 @@
+TICKERS = ['SPY',
+           'BRK-B']
