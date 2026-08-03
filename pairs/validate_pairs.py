@@ -27,19 +27,18 @@ def get_correlated_pairs():
 
     return correlated_pairs
 
-
-def get_cointegrated_pairs(correlated_pairs, market_data):
+def get_cointegrated_pairs(correlated_pairs, market_data: pd.DataFrame):
     cointegrated_pairs = []
 
     for pair in correlated_pairs:
-        stock1, stock2 = market_data(pair[0]), market_data(pair[1])
+        stock1, stock2 = market_data[pair[0]], market_data[pair[1]]
         aligned_stocks = pd.concat([stock1, stock2], axis=1)
 
-    cointegration_test = coint(aligned_stocks[pair[0]], aligned_stocks[pair[1]])
-    p_value = cointegration_test[1]
+        cointegration_test = coint(aligned_stocks[pair[0]], aligned_stocks[pair[1]])
+        p_value = cointegration_test[1]
 
-    if p_value <= COINTEGRATION_THRESHOLD:
-        cointegrated_pairs.append([pair, aligned_stocks])
+        if p_value <= COINTEGRATION_THRESHOLD:
+            cointegrated_pairs.append([pair, aligned_stocks])
 
     return cointegrated_pairs
 

@@ -13,7 +13,7 @@ def get_market_data(tickers, start_date, end_date):
     all_data = []
 
     for ticker in tickers:
-        df = yf.download(tickers=tickers, start=start_date, end=end_date)
+        df = yf.download(tickers=ticker, start=start_date, end=end_date)
         df['ticker'] = ticker
         all_data.append(df)
 
