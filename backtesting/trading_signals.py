@@ -8,6 +8,12 @@ class PairSignals:
         self.pair = pair
 
     def generate_positions(self, z_score):
+        """
+         0: Flat
+         1: Long Trade
+        -1: Short Trade
+        """
+
         position = pd.Series(0, index=z_score.index)
 
         for i in range(1, len(z_score)):
@@ -20,9 +26,9 @@ class PairSignals:
 
             if prev == 0:
                 if z < -ENTRY_THRESHOLD:
-                    position.iloc[i] = 1 #Enter Long Trade
+                    position.iloc[i] = 1
                 elif z > ENTRY_THRESHOLD:
-                    position.iloc[i] = -1 #Enter Short Trade
+                    position.iloc[i] = -1
                 else:
                     position.iloc[i] = 0
             elif prev > 0:

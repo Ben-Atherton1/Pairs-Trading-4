@@ -18,6 +18,7 @@ def get_market_data(tickers, start_date, end_date):
         all_data.append(df)
 
     combined_market_data = pd.concat(all_data)
+    combined_market_data = combined_market_data.sort_index()
 
     if 'Adj Close' in combined_market_data.columns:
         adjusted_data = combined_market_data.pivot_table(

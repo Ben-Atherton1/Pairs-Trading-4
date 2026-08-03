@@ -42,7 +42,7 @@ def get_cointegrated_pairs(correlated_pairs, market_data: pd.DataFrame):
 
     return cointegrated_pairs
 
-def calculate_hedge_ratio(dependent_stock, independent_stock):
+def calculate_hedge_ratio(dependent_stock: pd.Series, independent_stock: pd.Series):
     X = sm.add_constant(independent_stock)
     model = sm.OLS(dependent_stock, X).fit()
 
@@ -60,16 +60,19 @@ def get_hedge_ratios(stock1_data, stock2_data):
 
     return beta1, beta2
 
-def get_best_spread(stock1, stock2, pair_data, hedge_ratios):
+def get_best_spread(stock1, stock2, pair_data, hedge_ratios: tuple[int, int]):
 
-    spread1 = pair_data[stock1] - hedge_ratios[0] * pair_data[stock2]
-    spread2 = pair_data[stock2] - hedge_ratios[1] * pair_data[stock1]
+    stock1_series = pair_data[stock1][stock1]
+    stock2_series = pair_data[stock2][stock2]
+
+    spread1 = stock1_series - hedge_ratios[0] * stock2_series
+    spread2 = stock2_series - hedge_ratios[1] * stock1_series
 
     p_value1 = adfuller(spread1)[1]
     p_value2 = adfuller(spread2)[1]
 
     if p_value1 < p_value2:
-        return spread1, p_value1, hedge_ratios[0], stock1, stock2
+        return spread1, p_value1, hedge_ratios[0], stock1, stock2_series
     else:
         return spread2, p_value2, hedge_ratios[1], stock2, stock1
 
