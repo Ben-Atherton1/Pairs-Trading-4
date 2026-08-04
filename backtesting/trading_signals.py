@@ -10,8 +10,8 @@ class PairSignals:
     def generate_positions(self, z_score):
         """
          0: Flat
-         1: Long Trade
-        -1: Short Trade
+         1: Long Trade (Long stock1, short stock2)
+        -1: Short Trade (Short stock1, long stock2)
         """
 
         position = pd.Series(0, index=z_score.index)
