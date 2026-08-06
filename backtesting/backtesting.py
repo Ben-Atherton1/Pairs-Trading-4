@@ -39,114 +39,123 @@ def get_sharpe_ratio(returns: pd.Series):
     sharpe_ratio = np.sqrt(ANNUAL_TRADING_DAYS) * (mean_excess / std_excess)
     return sharpe_ratio
 
-def backtest_pair(pair: list[str, str], backtesting_data):
+def backtest_pair(pair: list[str, str], backtesting_data: pd.DataFrame):
     """
     Runs a backtest using unseen market data on a pair determined to be correlated and cointegrated on historical data
     """
 
-    stock1 = pair[0]
-    stock2 = pair[1]
+    try:
+        stock1 = pair[0]
+        stock2 = pair[1]
 
-    stock1_data = backtesting_data[stock1][stock1]
-    stock2_data = backtesting_data[stock2][stock2]
-
-    pair_signals = PairSignals(pair)
-
-    beta1, beta2 = get_hedge_ratios(stock1_data=stock1_data, stock2_data=stock2_data)
-    spread, p_value, hedge_ratio, stock1, stock2 = get_best_spread(stock1=stock1, stock2=stock2, pair_data=backtesting_data, hedge_ratios=[beta1, beta2])
-    z_score = get_z_score(spread)
-
-    position = pair_signals.generate_positions(z_score)
-
-    #Price Data for stock1 and stock2
-    price1 = backtesting_data[stock1][stock1]
-    price2 = backtesting_data[stock2][stock2]
+        stock1_data = backtesting_data[stock1]
+        stock2_data = backtesting_data[stock2]
 
 
-    def compute_trade_units(price1, price2, hedge_ratio, trade_capital):
-        """
-        Computes the number of spread units to trade based on available capital.
 
-        For a long trade:
-            Long: units of stock1
-            Short: units * hedge_ratio of stock2
-        """
-        spread_notional = price1 + abs(hedge_ratio) * price2
-        units = trade_capital / spread_notional
-        return min(units, equity * PORTFOLIO_PORTION_INVESTED_PER_TRADE)
+        pair_signals = PairSignals(pair)
+
+        beta1, beta2 = get_hedge_ratios(stock1_data=stock1_data, stock2_data=stock2_data)
+        spread, p_value, hedge_ratio, stock1, stock2 = get_best_spread(stock1=stock1, stock2=stock2, pair_data=backtesting_data, hedge_ratios=[beta1, beta2])
+        z_score = get_z_score(spread)
+
+        position = pair_signals.generate_positions(z_score)
+
+        #Price Data for stock1 and stock2
+        price1 = backtesting_data[stock1]
+        price2 = backtesting_data[stock2]
 
 
-    previous_position = 0
-    actions = []
+        def compute_trade_units(price1, price2, hedge_ratio, trade_capital):
+            """
+            Computes the number of spread units to trade based on available capital.
 
-    equity = STARTING_CAPITAL
-    equity_curve = []
+            For a long trade:
+                Long: units of stock1
+                Short: units * hedge_ratio of stock2
+            """
+            spread_notional = price1 + abs(hedge_ratio) * price2
+            units = trade_capital / spread_notional
+            return min(units, equity * PORTFOLIO_PORTION_INVESTED_PER_TRADE)
 
-    #Returns on stock1 and stock2
-    return1 = price1.pct_change()
-    return2 = price2.pct_change()
 
-    gross_pnl_series = []
+        previous_position = 0
+        actions = []
 
-    for t in position.index:
-        current_position = position.loc[t]
-        current_price1 = price1.loc[t]
-        current_price2 = price2.loc[t]
+        equity = STARTING_CAPITAL
+        equity_curve = []
 
-        trade_capital = equity * PORTFOLIO_PORTION_INVESTED_PER_TRADE
+        #Returns on stock1 and stock2
+        return1 = price1.pct_change()
+        return2 = price2.pct_change()
 
-        units = compute_trade_units(current_price1, current_price2, hedge_ratio, trade_capital)
+        gross_pnl_series = []
 
-        if previous_position == 0 and current_position == 1:
-            action = "Enter Long"
-        elif previous_position == 0 and current_position == -1:
-            action = "Enter Short"
-        elif previous_position != 0 and current_position == 0:
-            action = "Exit"
-        elif current_position == 1:
-            action = "Hold Long"
-        elif current_position == -1:
-            action = "Hold Short"
-        else:
-            action = "Flat"
+        for t in position.index:
+            current_position = position.loc[t]
+            current_price1 = price1.loc[t]
+            current_price2 = price2.loc[t]
 
-        actions.append({
-            "timestamp": t,
-            "action": action,
-            "position": current_position,
-            "stock1_px": current_price1,
-            "stock2_px": current_price2,
-            "units": units
-        })
+            trade_capital = equity * PORTFOLIO_PORTION_INVESTED_PER_TRADE
 
-        # Compute PnL only when we have returns
-        if current_position != 0 and not np.isnan(return1.loc[t]) and not np.isnan(return2.loc[t]):
-            if t in return1.index and t in return2.index:
+            units = compute_trade_units(current_price1, current_price2, hedge_ratio, trade_capital)
 
-                #Price Changes
-                price_change1 = current_price1 - price1.shift(1).loc[t]
-                price_change2 = current_price2 - price2.shift(1).loc[t]
+            if previous_position == 0 and current_position == 1:
+                action = "Enter Long"
+            elif previous_position == 0 and current_position == -1:
+                action = "Enter Short"
+            elif previous_position != 0 and current_position == 0:
+                action = "Exit"
+            elif current_position == 1:
+                action = "Hold Long"
+            elif current_position == -1:
+                action = "Hold Short"
+            else:
+                action = "Flat"
 
-                
-                # Long leg: stock1
-                long_leg_pnl = units * current_position * price_change1
+            actions.append({
+                "timestamp": t,
+                "action": action,
+                "position": current_position,
+                "stock1_px": current_price1,
+                "stock2_px": current_price2,
+                "units": units
+            })
 
-                # Short leg: stock2 (hedge_ratio units)
-                short_leg_pnl = -units * current_position * hedge_ratio * price_change2
+            # Compute PnL only when we have returns
+            if current_position != 0 and not np.isnan(return1.loc[t]) and not np.isnan(return2.loc[t]):
+                if t in return1.index and t in return2.index:
 
-                # Total spread PnL
-                pnl = long_leg_pnl + short_leg_pnl
+                    #Price Changes
+                    price_change1 = current_price1 - price1.shift(1).loc[t]
+                    price_change2 = current_price2 - price2.shift(1).loc[t]
 
-                gross_pnl_series.append(pnl)
+                    
+                    # Long leg: stock1
+                    long_leg_pnl = units * current_position * price_change1
 
-                equity += pnl
-                
-        equity_curve.append(equity)
+                    # Short leg: stock2 (hedge_ratio units)
+                    short_leg_pnl = -units * current_position * hedge_ratio * price_change2
 
-        previous_position = current_position
+                    # Total spread PnL
+                    pnl = long_leg_pnl + short_leg_pnl
 
-    total_pnl = sum(gross_pnl_series)
-    returns = pd.Series(equity_curve).pct_change().dropna()
-    sharpe_ratio = get_sharpe_ratio(returns)
+                    gross_pnl_series.append(pnl)
 
-    return gross_pnl_series, actions, total_pnl, equity_curve, sharpe_ratio
+                    equity += pnl
+                    
+            equity_curve.append(equity)
+
+            previous_position = current_position
+
+        total_pnl = sum(gross_pnl_series)
+        returns = pd.Series(equity_curve).pct_change().dropna()
+        sharpe_ratio = get_sharpe_ratio(returns)
+
+        return gross_pnl_series, actions, total_pnl, equity_curve, sharpe_ratio
+
+    except Exception as e:
+        print(f"Failed to backtest {pair} because of error: {e}")
+        return [], [], 0, [], 0
+
+    

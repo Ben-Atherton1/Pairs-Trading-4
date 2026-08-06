@@ -8,37 +8,57 @@ from statsmodels.tsa.stattools import adfuller, coint
 from data.config import COINTEGRATION_THRESHOLD, CORRELATION_THRESHOLD, ROLLING_WINDOW, STATIONARY_TEST_THRESHOLD
 from pairs.get_data import get_historic_data
 
-def get_correlated_pairs():
-    historical_data = get_historic_data()
-    correlation_matrix = historical_data.corr()
+def get_correlated_pairs(tickers):
+    raw_data = get_historic_data(tickers)
+    failed_tickers = []
+    cleaned_data = pd.DataFrame()
 
+    # Identify failed tickers
+    for ticker in raw_data.columns:
+        series = raw_data[ticker]
+
+        if series.isna().all():
+            failed_tickers.append(ticker)
+        else:
+            cleaned_data[ticker] = series
+
+    if cleaned_data.empty:
+        print("No Correlation Matrix")
+        return failed_tickers, [], cleaned_data
+
+    # Compute correlation matrix only on valid tickers
+    correlation_matrix = cleaned_data.corr()
     correlated_pairs = []
-
     tickers = correlation_matrix.columns
 
-    # Only look at upper triangle (i < j)
+
     for i in range(len(tickers)):
         for j in range(i + 1, len(tickers)):
             corr_value = correlation_matrix.iloc[i, j]
             if corr_value > CORRELATION_THRESHOLD:
-                correlated_pairs.append(
-                    (tickers[i], tickers[j], corr_value)
-                )
+                correlated_pairs.append([tickers[i], tickers[j]])
 
-    return correlated_pairs
+    return failed_tickers, correlated_pairs, cleaned_data
 
-def get_cointegrated_pairs(correlated_pairs, market_data: pd.DataFrame):
+
+def get_cointegrated_pairs(correlated_pairs: list[tuple[str, str]], market_data: pd.DataFrame):
     cointegrated_pairs = []
 
     for pair in correlated_pairs:
         stock1, stock2 = market_data[pair[0]], market_data[pair[1]]
-        aligned_stocks = pd.concat([stock1, stock2], axis=1)
+        aligned_stocks = pd.concat([stock1, stock2], axis=1).dropna()
 
-        cointegration_test = coint(aligned_stocks[pair[0]], aligned_stocks[pair[1]])
-        p_value = cointegration_test[1]
+        if aligned_stocks.empty:
+            continue
+
+        try:
+            cointegration_test = coint(aligned_stocks[pair[0]], aligned_stocks[pair[1]])
+            p_value = cointegration_test[1]
+        except Exception as e:
+            print(f"Skipping {pair} due to cointegration error: {e}")
 
         if p_value <= COINTEGRATION_THRESHOLD:
-            cointegrated_pairs.append([pair, aligned_stocks])
+            cointegrated_pairs.append([pair])
 
     return cointegrated_pairs
 
@@ -62,8 +82,8 @@ def get_hedge_ratios(stock1_data, stock2_data):
 
 def get_best_spread(stock1, stock2, pair_data, hedge_ratios: tuple[int, int]):
 
-    stock1_series = pair_data[stock1][stock1]
-    stock2_series = pair_data[stock2][stock2]
+    stock1_series = pair_data[stock1]
+    stock2_series = pair_data[stock2]
 
     spread1 = stock1_series - hedge_ratios[0] * stock2_series
     spread2 = stock2_series - hedge_ratios[1] * stock1_series
@@ -72,7 +92,7 @@ def get_best_spread(stock1, stock2, pair_data, hedge_ratios: tuple[int, int]):
     p_value2 = adfuller(spread2)[1]
 
     if p_value1 < p_value2:
-        return spread1, p_value1, hedge_ratios[0], stock1, stock2_series
+        return spread1, p_value1, hedge_ratios[0], stock1, stock2
     else:
         return spread2, p_value2, hedge_ratios[1], stock2, stock1
 
