@@ -17,7 +17,6 @@ def main():
     print(f"No. Correlated Pairs: {len(correlated_pairs)}")
     print(f"No. Cointegrated Pairs: {len(cointegrated_pairs)}")
 
-
     #BACKTEST EACH PAIR
 
     profiting_pairs = []
@@ -59,29 +58,6 @@ def main():
 
     print(f"No. profiting pairs: {len(profiting_pairs)}")
     print(f"Profiting Pairs: {profiting_pairs}")
-
-    # for i in range(len(actions)):
-    #     print(f"{i}) Units: {actions[i]["units"]}")
-
-
-# def main():
-#     backtesting_data = get_backtesting_data(['MU', 'SNPS'])
-#     gross_pnl, actions, total_pnl, equity_curve, sharpe_ratio = backtest_pair(['MU', 'SNPS'], backtesting_data=backtesting_data)
-
-#     final_equity = STARTING_CAPITAL + total_pnl
-#     max_equity = max(equity_curve)
-#     max_draw_up = max_equity - STARTING_CAPITAL
-#     min_equity = min(equity_curve)
-#     max_drawdown = STARTING_CAPITAL - min_equity
-
-#     print(f"Final Equity: £{final_equity:.2f}")
-#     print(f"Total PnL: £{total_pnl}")
-#     print(f"Max Equity: £{max_equity}")
-#     print(f"Min Equity: £{min_equity}")
-#     print(f"Max Drawup: £{max_draw_up}")
-#     print(f"Max Drawdown: £{max_drawdown}")
-#     print(f"Sharpe Ratio: {sharpe_ratio}")
-
 
 if __name__ == "__main__":
     main()

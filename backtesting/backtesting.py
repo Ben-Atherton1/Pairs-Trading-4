@@ -5,18 +5,6 @@ from data.config import RISK_FREE_RATE, ANNUAL_TRADING_DAYS, STARTING_CAPITAL, P
 from backtesting.trading_signals import PairSignals
 from pairs.validate_pairs import get_hedge_ratios, get_best_spread, get_z_score
 
-# def get_sharpe_ratio(capital_series):
-#     returns = capital_series.pct_change().dropna()
-#     valid_returns = returns[(capital_series.shift(1) > 0) & (capital_series > 0)]
-#     daily_risk_free_rate = RISK_FREE_RATE / ANNUAL_TRADING_DAYS
-#     excess_returns = valid_returns - daily_risk_free_rate
-#     mean_return = excess_returns.mean()
-#     std_return = excess_returns.std()
-
-#     sharpe_ratio = (ANNUAL_TRADING_DAYS ** 0.5) * mean_return / std_return
-
-#     return sharpe_ratio
-
 def get_sharpe_ratio(returns: pd.Series):
     """
     Calculates the annualized Sharpe ratio for a backtest.
