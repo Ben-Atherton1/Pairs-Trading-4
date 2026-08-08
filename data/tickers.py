@@ -1,22 +1,3 @@
-# TICKERS = ['SPY',
-#            'BRK-B']
-# TICKERS = ['MSFT',
-#            'BRK-B']
-# TICKERS = ['C',
-#            'GS']
-# TICKERS = ['NVDA',
-#            'PLTR']
-# TICKERS = ['UBS',
-#            'JPM',
-#            'NVDA',
-#            'PLTR',
-#            'MSFT',
-#            'BRK-B',
-#            'GS',
-#            'SPY',
-#            'C',
-#            'MU']
-
 TICKERS = [
     "AAPL", "ABNB", "ADBE", "ADI", "ADP", "ADSK", "AMAT", "AMD", "AMGN",
     "AMZN", "APP", "ARM", "ASML", "AVGO", "BIDU", "BKNG", "CDNS",

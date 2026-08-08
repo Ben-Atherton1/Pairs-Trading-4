@@ -25,7 +25,6 @@ def get_sharpe_ratio(returns: pd.Series):
     # Convert annual risk-free rate to per-period
     rf_per_period = RISK_FREE_RATE / ANNUAL_TRADING_DAYS
 
-    # Excess returns
     excess = returns - rf_per_period
 
     # Mean and std of excess returns
@@ -35,7 +34,6 @@ def get_sharpe_ratio(returns: pd.Series):
     if std_excess == 0:
         return np.nan
 
-    # Annualize Sharpe
     sharpe_ratio = np.sqrt(ANNUAL_TRADING_DAYS) * (mean_excess / std_excess)
     return sharpe_ratio
 
@@ -50,8 +48,6 @@ def backtest_pair(pair: list[str, str], backtesting_data: pd.DataFrame):
 
         stock1_data = backtesting_data[stock1]
         stock2_data = backtesting_data[stock2]
-
-
 
         pair_signals = PairSignals(pair)
 

@@ -44,14 +44,14 @@ def get_market_data(tickers, start, end) -> pd.DataFrame:
 
 
 def get_historic_data(tickers):
-    start_date = datetime.now()- timedelta(days=4*365)
-    end_date = datetime.now()- timedelta(days=365)
+    start_date = datetime.now()- timedelta(days=4*365+TRADING_DAYS_RATIO*ROLLING_WINDOW)
+    end_date = datetime.now()- timedelta(days=365+TRADING_DAYS_RATIO*ROLLING_WINDOW)
     historic_data = get_market_data(tickers, start_date, end_date)
 
     return historic_data
 
 def get_backtesting_data(pair):
-    start_date = datetime.now()- timedelta(days=365)
+    start_date = datetime.now()- timedelta(days=365+TRADING_DAYS_RATIO*ROLLING_WINDOW)
     end_date = datetime.now()
     backtesting_data = get_market_data(pair, start_date, end_date)
 
